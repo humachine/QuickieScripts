@@ -1,0 +1,37 @@
+#!/bin/bash
+#Script to accept a student's filename, move it, untar, and set it up for test cases
+
+SUBMISSIONLIST=list
+DEST_FILE=sub.tar
+DEST_DIR=out
+TEST_FILENAME=lss
+COMPLETION_DIR=Done
+
+
+if [ $# -eq 0 ]
+then
+    file=`head -n 1 $SUBMISSIONLIST`
+else
+    file=${1}.tar
+    echo $file
+fi
+echo $1
+cp ../$file $DEST_FILE
+rm -rf $DEST_DIR
+mkdir -p $DEST_DIR
+tar -xvf $DEST_FILE -C $DEST_DIR
+#mv ../$file ../Done/
+cd $DEST_DIR
+test -f *.zip
+if [[ $? == 0 ]]
+then
+    echo "Found zip file"
+    unzip *.zip
+fi
+cd ../
+ls -lLR $DEST_DIR
+
+cp $DEST_DIR/$TEST_FILENAME 3/
+rm $DEST_FILE
+
+mv ../$file ../$COMPLETION_DIR/
