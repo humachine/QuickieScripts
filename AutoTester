@@ -1,0 +1,168 @@
+#!/bin/bash
+TESTDIR=autotest
+CASESDIR=cases
+OUTFILE=every
+TESTBENCHDIR=testbench
+TESTCASEOUTFILE=out
+TESTCASEANSFILE=ans
+
+rm -rf $TESTBENCHDIR
+rm $CASESDIR/$TESTCASEOUTFILE*
+rm $CASESDIR/$OUTFILE
+
+mkdir -p $TESTBENCHDIR
+
+NUMCORRCASES=5
+
+STUDENTFILENAME=$1
+
+casesWithArgs(){
+    pwd
+    cd $CASESDIR
+    PASSED=0
+    CASENUM=1
+    for CASENUM in {1..5}; do
+        argstring=`cat $CASENUM`
+
+        ./$OUTFILE $argstring >$TESTCASEOUTFILE$CASENUM
+        sed 's:^[ \t]*::g' -i $TESTCASEOUTFILE$CASENUM
+
+        if cmp -s $TESTCASEOUTFILE$CASENUM $TESTCASEANSFILE$CASENUM; then
+            echo "Test case" $CASENUM"...........PASSED"
+            ((PASSED++))
+        else
+            echo "Test case " $CASENUM "....FAILED........."
+        fi
+    done
+    #rm $OUTFILE
+}
+casesWithoutArgs(){
+    FILENAME1=textfile
+    FILENAME2=anotherfile
+    FILENAME3=yetanotherfile
+    FILENAME0=shortfile
+
+    #--------------------Case 6
+    CASENUM=6
+    EVERY=-100,4
+    export EVERY
+
+    ./$OUTFILE $FILENAME3 >$TESTCASEOUTFILE$CASENUM
+    unset EVERY
+    ((CASENUM++))
+
+    #--------------------Case 7
+    EVERY=-20,20
+    export EVERY
+
+    ./$OUTFILE $FILENAME1 >$TESTCASEOUTFILE$CASENUM
+    unset EVERY
+    ((CASENUM++))
+
+
+    #--------------------Case 8
+    EVERY=-3
+    export EVERY
+
+    ./$OUTFILE $FILENAME0 >$TESTCASEOUTFILE$CASENUM
+    unset EVERY
+    ((CASENUM++))
+
+
+    #--------------------Case 9
+    EVERY=-30
+    export EVERY
+
+    ./$OUTFILE $FILENAME1 $FILENAME2 $FILENAME3 >$TESTCASEOUTFILE$CASENUM
+    unset EVERY
+    ((CASENUM++))
+
+
+    #--------------------Case 10
+    ./$OUTFILE $FILENAME1 >$TESTCASEOUTFILE$CASENUM
+    unset EVERY
+    ((CASENUM++))
+
+
+    for CASENUM in {6..10};do
+        if cmp -s $TESTCASEOUTFILE$CASENUM $TESTCASEANSFILE$CASENUM; then
+            echo "Test case" $CASENUM"...........PASSED"
+            ((PASSED++))
+        else
+            echo "Test case " $CASENUM "....FAILED........."
+        fi
+    done
+
+    echo Cleaning up. . . .
+    cd ..
+}
+runTestCase(){
+    TESTCASEOUTFILE=out
+    TESTCASEANSFILE=ans
+    casesWithArgs
+    casesWithoutArgs
+
+    echo "SpecialString $STUDENTFILENAME $PASSED"
+}
+
+findAndCompile(){
+    #Search and find any zip/tar files
+    echo -n "Finding zip files"
+
+    if [ -f $OUTFILE ]
+    then
+        echo "Found file already.. using it"
+        return
+    fi
+
+    find . \( -name "*.zip" -or -name "*.tar" \) -exec cp {} . \; >/dev/null 2>&1
+
+    unzip -o "*.zip" >/dev/null 2>&1
+    tar -xf "*.tar" >/dev/null 2>&1
+
+    #Bring all C & H files to this directory
+    echo Finding C files
+    find . \( -name "*.c" -o -name "*.h" -o -name "Makefile" -o -name "*.o" \) cp {} . \; >/dev/null 2>&1
+
+    #If Makefile exists, use it
+    MAKEFILE=Makefile
+    if [ -f $MAKEFILE ]
+    then
+        echo Running make...
+        make
+    else
+        echo Compiling . .. 
+        c99 -w every.c -o $OUTFILE
+    fi
+
+    OUTFILE=every
+    if [ ! -x $OUTFILE ]
+    then
+        exit 1
+    fi
+}
+
+#Unzip archive, move files and make/compile
+forePlay(){
+    cp $STUDENTFILENAME $TESTBENCHDIR
+    cd $TESTBENCHDIR
+
+    tar -xvf $STUDENTFILENAME
+    echo Successfully untarrred ..
+
+    retVal=$(findAndCompile)
+    echo $retVal
+
+    if [[ $i -ne 0 ]]
+    then
+        echo "Compilation Failed.. "
+        exit 2
+    fi
+
+    echo Moving $OUTFILE to Casedir
+    mv $OUTFILE ../$CASESDIR
+    cd ../
+}
+
+forePlay
+runTestCase
