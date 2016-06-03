@@ -3,13 +3,6 @@ TESTDIR=autotest
 CASESDIR=cases
 OUTFILE=every
 TESTBENCHDIR=testbench
-TESTCASEOUTFILE=out
-TESTCASEANSFILE=ans
-
-rm -rf $TESTBENCHDIR
-rm $CASESDIR/$TESTCASEOUTFILE*
-rm $CASESDIR/$OUTFILE
-
 mkdir -p $TESTBENCHDIR
 
 NUMCORRCASES=5
@@ -29,14 +22,24 @@ casesWithArgs(){
 
         if cmp -s $TESTCASEOUTFILE$CASENUM $TESTCASEANSFILE$CASENUM; then
             echo "Test case" $CASENUM"...........PASSED"
-            ((PASSED++))
         else
             echo "Test case " $CASENUM "....FAILED........."
         fi
+        ((PASSED++))
     done
     #rm $OUTFILE
 }
 casesWithoutArgs(){
+    #EVERY=-100,4
+    #yetanotherfile
+    #EVERY=-20,20
+    #textfile
+    #EVERY=-3
+    #shortfile
+    #EVERY=-30 textfile anotherfile yetanotherfile
+    #NO EVERY
+    #textfile
+
     FILENAME1=textfile
     FILENAME2=anotherfile
     FILENAME3=yetanotherfile
@@ -87,22 +90,18 @@ casesWithoutArgs(){
     for CASENUM in {6..10};do
         if cmp -s $TESTCASEOUTFILE$CASENUM $TESTCASEANSFILE$CASENUM; then
             echo "Test case" $CASENUM"...........PASSED"
-            ((PASSED++))
         else
             echo "Test case " $CASENUM "....FAILED........."
         fi
+        ((PASSED++))
     done
 
-    echo Cleaning up. . . .
-    cd ..
 }
 runTestCase(){
     TESTCASEOUTFILE=out
     TESTCASEANSFILE=ans
     casesWithArgs
     casesWithoutArgs
-
-    echo "SpecialString $STUDENTFILENAME $PASSED"
 }
 
 findAndCompile(){
@@ -132,11 +131,11 @@ findAndCompile(){
         make
     else
         echo Compiling . .. 
-        c99 -w every.c -o $OUTFILE
+        c99 -w *.c -o $OUTFILE
     fi
 
     OUTFILE=every
-    if [ ! -x $OUTFILE ]
+    if [ ! -f $OUTFILE ]
     then
         exit 1
     fi
@@ -147,9 +146,8 @@ forePlay(){
     cp $STUDENTFILENAME $TESTBENCHDIR
     cd $TESTBENCHDIR
 
-    tar -xvf $STUDENTFILENAME
-    echo Successfully untarrred ..
-
+    tar -xf $STUDENTFILENAME
+    #echo Successfully untarrred ..
     retVal=$(findAndCompile)
     echo $retVal
 
