@@ -1,0 +1,12 @@
+#!/bin/bash
+CURRNUM=`cat dcounter`
+STUDENTLIST=rolllist
+FILENAME=`tail -n +$CURRNUM $STUDENTLIST | head -n 1`
+
+echo $FILENAME $CURRNUM
+
+rm *.tar
+cp ../$FILENAME .
+
+((CURRNUM++))
+echo $CURRNUM>dcounter
